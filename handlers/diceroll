@@ -1,0 +1,5 @@
+import random
+
+def d8():
+    d_8 = random.randint(1, 5)
+    return d_8
