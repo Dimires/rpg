@@ -10,7 +10,7 @@ from models.character import *
 from models.inventory import *
 from models.level import *
 from models.player import *
-from models.photos import *
+from photosk import *
 
 from aiogram import Bot, Dispatcher, Router, types, F
 from aiogram.fsm.context import FSMContext
@@ -20,7 +20,12 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.filters.state import State, StatesGroup
 
 # Включаем логирование
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.DEBUG, 
+    format = "%(asctime)s - %(module)s - %(levelname)s - %(funcName)s: %(lineno)d - %(message)s", 
+    datefmt='%H:%M:%S',
+    )
+
 
 # Загружаем переменные окружения из .env файла
 load_dotenv('hook.env')
@@ -74,6 +79,7 @@ async def play_kb(user_telegram_id: id):
 # ОСНОВНАЯ ЧАСТЬ
 @dp.message(F.text == "/start")
 async def cmd_start(message: types.Message):
+    logging.info(f"User {message.from_user.id}/{message.from_user.full_name} start game.")
     await message.reply('Добро пожаловать !\n\n Прежде чем мы начнем небольшое введение )\n\U0001f4aa - ваша сила, от нее зависит ваш урон. Когда вы пьете особые зелья, покупаете оружие и находите артефакты она растет.\n\U0001f6e1\uFE0F - ваша броня, чем она выше тем больше защиты у вас и меньше ловкости из-за ее веса\n\U0001f3c3 - ловкость, от нее зависит сможете ли вы уклониться от атаки и пройти особые испытания.\n\U0001f441\uFE0F\u200D\U0001f5e8\uFE0F - находчивость, она нужна для прохождения особых испытаний.\n\U0001f357 - голод, ваша естественная потребность в еде !\n\u2764\uFE0F - ваше здоровье\n\U0001f4a7 - это ваша мана, помните что она нужна только тем, кто умеет использовать заклинания !',
                          reply_markup= await main_kb(message.from_user.id))
 
@@ -83,6 +89,7 @@ user_characters = {}
 
 @dp.message(F.text == 'О нас \U0001f4d6')
 async def info_group(message: types.Message):
+    logging.info(f'User {message.from_user.id}/{message.from_user.full_name} get info about us!')
     await message.answer(f'Бот разработан по заказу: @Malaret \nРазрабочик:@dmitry_skn',
                          reply_markup=await main_kb(message.from_user.id))
 
@@ -93,6 +100,7 @@ def get_player(user_id):
 
 @dp.message(F.text == 'Начать игру \U0001f3b2')
 async def start_game(message: types.Message):
+    logging.info
     rod = await message.answer_dice("\U0001f3b2")
     persona = rod.dice.value
     player = players.get(message.from_user.id, Player(message.from_user.id))
@@ -114,13 +122,15 @@ async def start_game(message: types.Message):
     await asyncio.sleep(2)
     await message.answer('Осталось запастись всем необходимым и выдвигаться',
                         reply_markup= await schop_kb(message.from_user.id))
-    return hero
+    #return hero
 
 def get_character(user_id):
     return user_characters.get(user_id)
 
 @dp.message(F.text == 'Направиться в магазин \U0001f4b0')
 async def start_shop(message: types.Message):
+    logger = logging.getLogger(__name__)
+    logger.info(f"User {message.from_user.id}/{message.from_user.full_name} is going to the shop.")
     keyboard_shop = InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(text='Еда \U0001f35e', callback_data='shop_food'),
@@ -139,13 +149,14 @@ async def start_shop(message: types.Message):
 
     await bot.send_photo(chat_id=message.chat.id, 
     photo=photo, 
-    caption=f'Куда вы направитесь ?',
+    caption='Куда вы направитесь ?',
     parse_mode="HTML", 
     reply_markup=keyboard_shop)
     
 # Обработчик для выбора категории
 @dp.callback_query(F.data == 'shop_food')
 async def shop_food(callback: types.CallbackQuery):
+    logging.info(f'User {callback.message.from_user.id}/{callback.message.from_user.full_name} shopping food')
     await callback.message.delete()
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
@@ -162,6 +173,7 @@ async def shop_food(callback: types.CallbackQuery):
 
 @dp.callback_query(F.data == 'shop_weapons')
 async def shop_weapons(callback: types.CallbackQuery):
+    logging.info(f'User {callback.message.from_user.id}/{callback.message.from_user.full_name} shopping weapons')
     await callback.message.delete()
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
@@ -178,6 +190,7 @@ async def shop_weapons(callback: types.CallbackQuery):
 
 @dp.callback_query(F.data == 'shop_armor')
 async def shop_armor(callback: types.CallbackQuery):
+    logging.info(f'User {callback.message.from_user.id}/{callback.message.from_user.full_name} shopping armor')
     await callback.message.delete()
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
@@ -194,6 +207,7 @@ async def shop_armor(callback: types.CallbackQuery):
 
 @dp.callback_query(F.data == 'shop_potions')
 async def shop_potions(callback: types.CallbackQuery):
+    logging.info(f'User {callback.message.from_user.id}/{callback.message.from_user.full_name} shopping potions')
     await callback.message.delete()
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
@@ -217,6 +231,7 @@ async def shop_potions(callback: types.CallbackQuery):
 # Обработчик для возврата в магазин
 @dp.callback_query(F.data == 'back_to_shop')
 async def back_to_shop(callback: types.CallbackQuery):
+    logging.info(f'User {callback.message.from_user.id}/{callback.message.from_user.full_name} go back to shop')
     character = get_character(callback.from_user.id)
     # Удаляем предыдущее сообщение с магазином
     await callback.message.delete()

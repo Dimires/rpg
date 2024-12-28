@@ -1,8 +1,3 @@
-import os
-
-# Убедитесь, что путь к директории 'data' правильный
-all_media_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
-
 # Путь к файлам
 photo_1 = r'data\5289688684351842566.jpg'
 photo_2 = r'data\5289649879322325464.jpg'

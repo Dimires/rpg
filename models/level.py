@@ -1,6 +1,6 @@
 from models.character import *
 from models.inventory import *
-from models.photos import *
+from photosk import *
 import random
 
 class Level:
