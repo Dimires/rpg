@@ -581,7 +581,7 @@ def main_loop():
 
 main_loop()
 
-@dp.message(F.text == 'Броситься в атаку ⚔️')
+@dp.message(F.text == 'Броситься в атаку \u2694\uFE0F')
 async def attack_enemy(message: types.Message):
     global current_target, current_level_index, random_loot, descript, photo
 
@@ -750,7 +750,7 @@ async def perform_attack(message: types.Message):
         current_level_index += 1
         main_loop()
 
-@dp.message(F.text == 'Скрыться 👤')
+@dp.message(F.text == 'Скрыться \U0001f464')
 async def hide_from_enemy(message: types.Message):
     global current_level_index, random_loot, descript, photo
     user_id = message.from_user.id
