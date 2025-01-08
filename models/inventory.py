@@ -95,7 +95,7 @@ berry = Item(name='Ягоды', description='Сладкие и сочные яг
 # БАФЫ
 brass_knuckles = Item(name = 'Дубинка', description = "Палка....бить.", dammage_value=10)
 knife = Item(name='Кинжал', description='Небольшой, но заточеный кинжал.', dammage_value=20)
-sword = Item(name = 'Меч', description='Хороший стальной меч, на него даже смотреть приятно.', dammage_value= 3000)
+sword = Item(name = 'Меч', description='Хороший стальной меч, на него даже смотреть приятно.', dammage_value= 30)
 
 # БРОНЯ
 leather_armor = Item(name = 'Кожанный доспех', description='Дешевый, но надежный кожанный доспех.', armor_value=1)

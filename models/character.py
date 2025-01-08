@@ -146,7 +146,7 @@ class Spell:
         damage = random.randint(1, 40)
         character.hp -= damage
         target.hp += damage
-        msg = f"{target.name} забирает {damage} здоровья у {character.name}\nУ вас осталось {character.hp}"
+        msg = f"{target.name} забирает {damage} здоровья у {character.name}\n\nУ вас осталось {character.hp} hp"
         return msg
 
 
@@ -184,15 +184,15 @@ hunger_damage = Spell("Голод", 10, Spell.hunger_charackter)
 darkness_bolt = Spell("Теневые стрелы", 10, Spell.dark_bolt)
 vampirism = Spell("Дань жизни", 10, Spell.vampirism)
 
-raider1 = Character(name='Бандит с ножом', tipe='maroder', hp=60, strength=25)
-raider2 = Character(name='Главарь банды', tipe='maroder', hp=70, strength=30, armor= 4)
+raider1 = Character(name='Бандит с ножом', tipe='maroder', hp=60, strength=30)
+raider2 = Character(name='Главарь банды', tipe='maroder', hp=70, strength=35)
 raider3 = Character(name='Худощавый бандит', tipe='maroder', hp=40, strength=20)
 
-Necromant = Character(name='Некромант', tipe='wither', mana = 600, hp=80, perception=100, strength=30)
+Necromant = Character(name='Некромант', tipe='wither', mana = 600, hp=80, perception=100, strength=40)
 zombie_1 = Character(name = 'Недавно успоший', tipe= 'zomback', hp= 40, perception=100, strength= 45)
 zombie_2 = Character(name= 'Мертвец', tipe='zomback', hp=31, perception=100, strength= 30)
 
-gull = Character(name='Нетопырь', tipe='monster', hp= 120, agility=80, perception= 30, strength=80)
+gull = Character(name='Нетопырь', tipe='monster', hp= 120, agility=80, perception= 30, strength=80, armor=2)
 
 utopec_1 = Character(name='Скелет', tipe='zomback', hp = 50, perception=70, strength= 20)
 utopec_2 = Character(name='Скелет в кирасе', tipe='zombak', hp=40, perception=30, strength=35, armor= 3)

@@ -109,13 +109,13 @@ async def start_game(message: types.Message):
     players[message.from_user.id] = player
 
     if persona in range(1, 4) :
-        hero = Character(name = 'Оливер', tipe= 'простой крестьянин', hp = 100, strength= 15, agility=70, hunger=10, perception=50, money= 10)
+        hero = Character(name = 'Оливер', tipe= 'простой крестьянин', hp = 100, armor=0, strength= 30, agility=70, hunger=10, perception=50, money= 10)
         intro = 'Вы родились в простой деревне, где каждый день был наполнен трудом на полях и заботой о семье. С раннего утра до позднего вечера вы работали, обрабатывая землю и ухаживая за скотом. Но в вашем сердце всегда жила мечта о лучшей жизни, о том, чтобы однажды покинуть пределы родного села и увидеть мир за его границами. Шли годы и вы продолжали жить как и прежде, но теперь, когда слухи о приключениях доходят до вашего уха, вы чувствуете, что пришло время покинуть привычный быт. Чтобы изменить свою судьбу и принести славу своей семье, вам нужно совершить подвиг, который изменит вашу жизнь навсегда. \n\nГоды жизни в вашей деревне сделали вас устойчивым к тяжелым и голодным временам, чувство голода меньше терзает вас'
     elif persona in range(4, 6):
-        hero = Character(name= 'Ричард', tipe = 'рыцарь', hp=150 , strength= 20, agility=90, hunger=7, perception=55, money= 10)
+        hero = Character(name= 'Ричард', tipe = 'рыцарь', hp=150 , armor=0, strength= 40, agility=90, hunger=7, perception=55, money= 10)
         intro = 'Вы родились в благородной семье, где с раннего возраста вас учили искусству войны и кодексу чести. С детства вы наблюдали за подвигами великих рыцарей, их отвагой и благородством, и мечтали о том, чтобы однажды стать одним из них. Ваши тренировки были изнурительными, но вы никогда не жаловались — каждый удар меча и каждое занятие верховой ездой приближали вас к вашей мечте. С годами вы стали искусным воином, обладающим не только силой, но и мудростью. Вы знаете, что истинная доблесть заключается не только в мастерстве с оружием, но и в умении защищать слабых, проявлять сострадание и следовать кодексу чести. Однако, несмотря на все достижения, вы понимаете, что для того, чтобы стать полноценным рыцарем, вам необходимо совершить подвиг, который будет говорить о вашей доблести и преданности. Теперь, когда вы стоите на пороге своего судьбоносного приключения, ваше сердце полно решимости. Вы готовы отправиться в путь, чтобы сразиться с чудовищами, защитить невинных и завоевать славу, которая сделает вас легендой. Ваше имя будет звучать в песнях бардов, а ваши подвиги будут вдохновлять будущие поколения.\n\nВы сильны и здоровы, многочисленные тренировки укрепили ваше тело.'
     elif persona == 6:
-        hero = Character(name= 'Моргана', tipe='волшебница', mana=350, hp= 90, strength= 15, agility=50, hunger=6, perception=70, money= 10)
+        hero = Character(name= 'Моргана', tipe='волшебница', mana=350, hp= 90, armor=0, strength= 20, agility=50, hunger=6, perception=80, money= 10)
         intro = 'Удача улыбнулась вам. С детсва вам была дарована сила, что отличала вас. Ваша жизнь была полна изучения древних текстов и практики магии, и вы провели годы, обучаясь у мудрых наставников. Каждое заклинание, которое вы произносили, приближало вас к пониманию тайн вселенной и вашей истинной природы. Теперь, когда вы достигли зрелости, вы готовы использовать свои знания и способности для великих дел. Ваша цель — не просто овладеть магией, но и стать защитницей слабых, исследовать неизведанные земли и раскрывать секреты, которые могут изменить ход истории. Чтобы заслужить уважение и признание, вам нужно совершить подвиг, который продемонстрирует силу вашей магии и вашу преданность делу. \nВы заглядываете в книгу волшебства: \n\nОгненный шар \U0001f525 - требует 20 маны и наносит средний урон\nЩит света \u2600\uFE0F - дарует немного защиты в обмен на 250 маны \nЦепная молния \u26A1 - наности средний урон нескольким врагам и потребляет 30 маны \nИсцеление \u2764\uFE0F - восстанавливает здоровье и потребляет 50 маны \nМетеор \U0001f4ab - это заклинание может нанести огромный урон нескольким врагам за 100 маны. \n\nПомните об этом, когда будете пользоваться своей силой.'
 
     await asyncio.sleep(6)
@@ -592,7 +592,7 @@ async def attack_enemy(message: types.Message):
 
     # Формируем список врагов
     enemy_list = "\n".join([f"{i + 1}. {enemy.name} (HP: {enemy.hp})" for i, enemy in enumerate(enemies)])
-    await message.answer(f'Возможный урон от результата броска кости:\n1. От 1 до {character.strength//5}\n2. От 5 до {character.strength//4}\n3. От 5 до {character.strength//2}\n4. От 5 до {character.strength}\n5. От 20 до {character.strength}6. От 20 до {character.strength*2}\n\nВаши враги:\n{enemy_list}\nВыберите номер врага, которого хотите атаковать:')
+    await message.answer(f'Возможный урон от результата броска кости:\n1. От 1 до {character.strength//5}\n2. От 5 до {character.strength//4}\n3. От 5 до {character.strength//2}\n4. От 5 до {character.strength}\n5. От 20 до {character.strength}\n6. От 20 до {character.strength*2}\n\nВаши враги:\n{enemy_list}\nВыберите номер врага, которого хотите атаковать:')
 
     # Устанавливаем состояние готовности к атаке
     is_ready_to_attack = True
@@ -651,7 +651,7 @@ async def perform_attack(message: types.Message):
             main_loop(player)
             await message.reply('Вы погибли, попробуйте еще',
                 reply_markup= await main_kb(message.from_user.id))
-                        
+            return None    
         else:
             await message.answer(f'{character.name} осталось {character.hp} здоровья.')
             return None
@@ -666,17 +666,13 @@ async def perform_attack(message: types.Message):
             Player.reset_game(character)
             player.current_level_index = 0
             main_loop(player)
-            await message.reply('Вы погибли, попробуйте еще',
+            await message.answer('Вы погибли, попробуйте еще',
                 reply_markup= await main_kb(message.from_user.id))
-            
+            return None
                         
         else:
             await message.answer(f'{character.name} осталось {character.hp} здоровья.')
             return None
-
-        # Удаляем сообщение о неудачной атаке
-        await asyncio.sleep(2)
-        await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)  
 
     else:
         if attack == 1:
@@ -738,19 +734,21 @@ async def perform_attack(message: types.Message):
                         Player.reset_game(character)
                         player.current_level_index = 0
                         main_loop(player)
-                        await message.reply('НУ а как ты хотел ? Доставку еды еще не изобрели',
+                        await message.answer('НУ а как ты хотел ? Доставку еды еще не изобрели',
                                         reply_markup= await main_kb(message.from_user.id))
-                        
+                        return None 
                     if character.hp <= 0:
                         await message.answer(f'{character.name} был повержен в бою!')
                         Player.reset_game(character)
                         player.current_level_index = 0
                         main_loop(player)
-                        await message.reply('Вы погибли, попробуйте еще',
+                        await message.answer('Вы погибли, попробуйте еще',
                                 reply_markup= await main_kb(message.from_user.id))
-                        
+                        return None
+                    
                     else:
                         await message.answer(f'{character.name} осталось {character.hp} здоровья.')
+                        return None
                 else:
                     await message.answer(f'Атака {current_target.name} не пробила броню {character.name}!')
     # После завершения атаки сбрасываем состояние
@@ -764,8 +762,6 @@ async def perform_attack(message: types.Message):
         await asyncio.sleep(1)
         await message.answer(f'Голод:{character.hunger} - 1 \nУ вас осталось {character.hunger - 1} сытости')
         character.hunger -= 1
-        await asyncio.sleep(2)
-        await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
         await message.answer(f'Все враги повержены! Вы победили!\nПосле победы над врагами вы находите:\n{random_loot}', parse_mode = "HTML")
         photo = FSInputFile(player.photo)
         await asyncio.sleep(1)
@@ -782,15 +778,15 @@ async def perform_attack(message: types.Message):
                 Player.reset_game(character)
                 player.current_level_index = 0
                 main_loop(player)
-                await message.reply('Добро пожаловать !',
+                await message.answer('Добро пожаловать !',
                          reply_markup= await main_kb(message.from_user.id))
-                
+                return None 
         elif player.current_level_index == 7:
             await message.answer("Вы победили, теперь, когда угроза миновала вы чувствуете как сильно устали. Вы идете обратно, забрав артефакт, который служил вампиру")
             Player.reset_game(character) # Сбрасываем уровень на стартовый
             player.current_level_index = 0
             main_loop(player)
-            await message.reply('Добро пожаловать, снова',
+            await message.answer('Добро пожаловать, снова',
                             reply_markup= await main_kb(message.from_user.id))
             return None
     # Проверяем, не упал ли голод до нуля
@@ -800,9 +796,9 @@ async def perform_attack(message: types.Message):
             Player.reset_game(character)
             player.current_level_index = 0
             main_loop(player)
-            await message.reply('НУ а как ты хотел ? Доставку еды еще не изобрели',
+            await message.answer('НУ а как ты хотел ? Доставку еды еще не изобрели',
                             reply_markup= await main_kb(message.from_user.id))
-            
+            return None 
         player.current_level_index += 1
         main_loop(player)
 
@@ -814,7 +810,7 @@ async def hide_from_enemy(message: types.Message):
     player = get_player(user_id)
 
     if character is None:
-        await message.answer("Сначала начните игру, чтобы получить персонажа!")
+        await message.answer("Сначала начните игру, чтобы получить персонажа!\n/start")
         return
 
     global current_target
@@ -838,8 +834,6 @@ async def hide_from_enemy(message: types.Message):
         character.hunger -= 1
         photo = FSInputFile(player.photo) 
         current_target = None
-        await asyncio.sleep(2)
-        await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
         await bot.send_photo(chat_id=message.chat.id, photo=photo, caption=levels[player.current_level_index].descript)
         if character.hunger <= 0:
             await asyncio.sleep(1)
@@ -847,8 +841,9 @@ async def hide_from_enemy(message: types.Message):
             Player.reset_game(character)
             player.current_level_index = 0
             main_loop(player)
-            await message.reply('НУ а как ты хотел ? Доставку еды еще не изобрели',
+            await message.answer('НУ а как ты хотел ? Доставку еды еще не изобрели',
                             reply_markup= await main_kb(message.from_user.id))
+            return None 
         if current_level_index == 4:
             mess = river_port(character)
             await message.answer(mess)
@@ -858,17 +853,18 @@ async def hide_from_enemy(message: types.Message):
                 Player.reset_game(character)
                 player.current_level_index = 0
                 main_loop(player)
-                await message.reply('Добро пожаловать !',
+                await message.answer('Добро пожаловать !',
                          reply_markup= await main_kb(message.from_user.id))
-                
+                return None 
+            
         elif current_level_index == 7:
             await message.answer("Вы победили, теперь, когда угроза миновала вы чувствуете как сильно устали. Вы идете обратно, забрав артефакт, который служил вампиру")
             Player.reset_game(character) # Сбрасываем уровень на стартовый
             player.current_level_index = 0
             main_loop(player)
-            await message.reply('Добро пожаловать, снова',
+            await message.answer('Добро пожаловать, снова',
                             reply_markup= await main_kb(message.from_user.id))
-        
+            return None 
         player.current_level_index += 1
         main_loop(player)
     else:
@@ -878,18 +874,16 @@ async def hide_from_enemy(message: types.Message):
 
         enemy_damage = current_target.strength
         character.hp -= enemy_damage
-        await message.answer(f"{current_target.name} атакует {character.name} и наносит {enemy_damage} урона!\nУ вас осталось {character.hp} здоровья")
-        await asyncio.sleep(2)
-        await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
+        await message.answer(f"{current_target.name} атакует {character.name} и наносит {enemy_damage} урона!")
 
         if character.hp <= 0:
             await message.answer(f'{character.name} был повержен в бою!')
             Player.reset_game(character)
             player.current_level_index = 0
             main_loop(player)
-            await message.reply('Добро пожаловать !',
+            await message.answer('Добро пожаловать !',
                         reply_markup= await main_kb(message.from_user.id))
-            
+            return None 
 
         await message.answer(f"{character.name} осталось {character.hp} здоровья.")
 
@@ -915,17 +909,17 @@ async def hide_from_enemy(message: types.Message):
                 Player.reset_game(character)
                 player.current_level_index = 0
                 main_loop(player)
-                await message.reply('Добро пожаловать !',
+                await message.answer('Добро пожаловать !',
                          reply_markup= await main_kb(message.from_user.id))
-                
+                return None 
         elif player.current_level_index == 7:
             await message.answer("Вы победили, теперь, когда угроза миновала вы чувствуете как сильно устали. Вы идете обратно, забрав артефакт, который служил вампиру")
             Player.reset_game(character) # Сбрасываем уровень на стартовый
             player.current_level_index = 0
             main_loop(player)
-            await message.reply('Добро пожаловать, снова',
+            await message.answer('Добро пожаловать, снова',
                             reply_markup= await main_kb(message.from_user.id))
-            
+            return None 
     # Проверяем, не упал ли голод до нуля
         if character.hunger <= 0:
             await asyncio.sleep(1)
@@ -933,9 +927,9 @@ async def hide_from_enemy(message: types.Message):
             Player.reset_game(character)
             player.current_level_index = 0
             main_loop(player)
-            await message.reply('НУ а как ты хотел ? Доставку еды еще не изобрели',
+            await message.answer('НУ а как ты хотел ? Доставку еды еще не изобрели',
                             reply_markup= await main_kb(message.from_user.id))
-            
+            return None 
         player.current_level_index += 1
         main_loop(player)
 
@@ -997,7 +991,7 @@ async def handle_defend(message: types.Message):
         Player.reset_game(character)
         current_level_index = 0
         main_loop()
-        await message.reply('НУ а как ты хотел ? Доставку еды еще не изобрели',
+        await message.answer('НУ а как ты хотел ? Доставку еды еще не изобрели',
                             reply_markup= await main_kb(message.from_user.id))
     else:
         await asyncio.sleep(1)
@@ -1113,17 +1107,17 @@ async def handle_spell_cast(callback: types.CallbackQuery):
                 Player.reset_game(character)
                 player.current_level_index = 0
                 main_loop(player)
-                await callback.message.reply('Добро пожаловать !',
+                await callback.message.answer('Добро пожаловать !',
                          reply_markup= await main_kb(callback.message.from_user.id))
-                
+                return None 
         elif current_level_index == 7:
             await callback.message.answer("Вы победили, теперь, когда угроза миновала вы чувствуете как сильно устали. Вы идете обратно, забрав артефакт, который служил вампиру")
             Player.reset_game(character) # Сбрасываем уровень на стартовый
             player.current_level_index = 0
             main_loop(player)
-            await callback.message.reply('Добро пожаловать, снова',
+            await callback.message.answer('Добро пожаловать, снова',
                             reply_markup= await main_kb(callback.message.from_user.id))
-            
+            return None 
     # Проверяем, не упал ли голод до нуля
         if character.hunger <= 0:
             await asyncio.sleep(1)
@@ -1131,9 +1125,9 @@ async def handle_spell_cast(callback: types.CallbackQuery):
             Player.reset_game(character)
             player.current_level_index = 0
             main_loop(player)
-            await callback.message.reply('НУ а как ты хотел ? Доставку еды еще не изобрели',
+            await callback.message.answer('НУ а как ты хотел ? Доставку еды еще не изобрели',
                             reply_markup= await main_kb(callback.message.from_user.id))
-            
+            return None 
         player.current_level_index += 1
         main_loop(player)
 
