@@ -37,6 +37,8 @@ stora = MemoryStorage()
 dp = Dispatcher(storage=stora)
 router = Router()
 
+def get_character(user_id):
+    return user_characters.get(user_id)
 # КНОПКИ 
 async def main_kb(user_telegram_id: int):
     kb_list = [
@@ -65,7 +67,7 @@ async def schop_kb(user_telegram_id: int):
     
 async def play_kb(user_telegram_id: id):
     kb_play = [
-        [KeyboardButton(text='Броситься в атаку \u2694\uFE0F', callback_data = 'figth')],
+        [KeyboardButton(text='Приготовиться к бою \u2694\uFE0F', callback_data = 'figth')],
         [KeyboardButton(text='Инвентарь \U0001f392', callback_data = 'inventa'), KeyboardButton(text='Скрыться \U0001f464', callback_data = 'stels')],
         [KeyboardButton(text='Изучить место \U0001f4dc', callback_data = 'info'), KeyboardButton(text='Особые умения \U0001f31f', callback_data = 'spell')]
     ]
@@ -120,12 +122,11 @@ async def start_game(message: types.Message):
     user_characters[message.from_user.id] = hero    
     await message.answer(f"Игра началась! \U0001f389 \nВам выпало {rod.dice.value} \n{hero.character_info()}\n\n{intro}")
     await asyncio.sleep(2)
-    await message.answer('Осталось запастись всем необходимым и выдвигаться',
+    await message.answer('Осталось запастись всем необходимым и выдвигаться, всего у вас 10 монет',
                         reply_markup= await schop_kb(message.from_user.id))
-    #return hero
+    return player
 
-def get_character(user_id):
-    return user_characters.get(user_id)
+
 
 @dp.message(F.text == 'Направиться в магазин \U0001f4b0')
 async def start_shop(message: types.Message):
@@ -149,7 +150,7 @@ async def start_shop(message: types.Message):
 
     await bot.send_photo(chat_id=message.chat.id, 
     photo=photo, 
-    caption='Куда вы направитесь ?',
+    caption=f'Куда вы направитесь ?',
     parse_mode="HTML", 
     reply_markup=keyboard_shop)
     
@@ -235,7 +236,7 @@ async def back_to_shop(callback: types.CallbackQuery):
     character = get_character(callback.from_user.id)
     # Удаляем предыдущее сообщение с магазином
     await callback.message.delete()
-    await asyncio.sleep(2)
+    await asyncio.sleep(1)
     # Отправляем новое сообщение с информацией о деньгах
     await callback.message.answer(text=f'Сейчас у вас {character.money} монет', reply_markup=await start_shop(callback.message))
 
@@ -481,35 +482,6 @@ async def buy_strength_potion(callback: types.CallbackQuery):
     await asyncio.sleep(2)
     await callback.message.answer(f"Вы купили Зелье силы! \U0001f4aa\nУ вас осталось {character.money} монет.", reply_markup=callback.message.reply_markup)
 
-
-
-@dp.callback_query(F.data == 'start_adventure')
-async def start_adventure(callback: types.CallbackQuery):
-    user_id = callback.from_user.id
-    character = get_character(user_id)
-
-    if character is None:
-        await callback.answer("Сначала начните игру, чтобы получить персонажа!")
-        return
-
-    await callback.message.answer(f'Вы направляетесь к новым свершениям, у вас {character.inventory.show_inventory()} \nВ вашем кошельке{character.money} монет.', parse_mode='HTML')
-    photo = FSInputFile(photo_2)  
-
-    await bot.send_photo(chat_id=callback.message.chat.id, photo=photo, caption='Тихие пролески сменяются полями, реками и озерами, после полудня пути вы входите на земли Пепельных равнин. Эти земли некогда славились \
-                                   своей красотой, но чем ближе вы к замку Каструм Нахт, тем больше кажется что вы из жаркого лета переместились в позднюю осень.')
-                                  
-    await asyncio.sleep(2)
-    photo = FSInputFile(photo_3)  
-    Player.reset_game(character)
-    
-    await bot.send_photo(chat_id=callback.message.chat.id, photo=photo, caption='Вот вы уже на обширном кладбище этих земель, еще чуть чуть и вы попадете в прилегающую к замку деревню. Вы видите несколько сомнительных \
-                                  личностей, роющихся у ближайших могил. Когда вы приближаетесь они со злобой смотрят на вас и начинают приближаться...в руке одного из них блеснул нож')
-    await asyncio.sleep(2)
-    
-    action_kb = await play_kb(user_id)
-    await callback.message.answer("Что вы хотите сделать?", reply_markup=action_kb)
-
-
 current_level_index = 0
 enemys = []
 loot = []
@@ -547,75 +519,108 @@ def update_photo():
         photo = []
         # with open(photo, 'rb') as photo:
 
+def main_loop(player):
+    player.loot = levels[player.current_level_index].loot.copy() if levels[player.current_level_index].loot else []
+    player.enemies = levels[player.current_level_index].enemies.copy() if levels[player.current_level_index].enemies else []
+    player.descript = levels[player.current_level_index].descript if levels[player.current_level_index].descript else None
+    player.photo = levels[player.current_level_index].photo if levels[player.current_level_index].photo else None
 
-def main_loop():
-    global current_level_index, current_target, random_loot, descript, photo
-    update_loot()
-    update_enemies()
-    update_descript()
-    update_photo()
-
-    # Сброс здоровья врагов
-    for enemy in enemys:
-        enemy.reset_health()  # Сбрасываем здоровье каждого врага
-
-    if loot:
-        random_loot = random.choice(loot)
-    else:
-        random_loot = None
-
-    if enemys:
-        current_target = random.choice(enemys)
-    else:
-        current_target = None
+    # Сбрасываем флаг исследования
+    player.has_researched = False
     
-    if descript:
-        descript = descript
+    # Сброс здоровья врагов
+    for enemy in player.enemies:
+        enemy.reset_health()
+
+    if player.loot:
+        player.random_loot = random.choice(player.loot)
     else:
-        descript = None
+        player.random_loot = None
 
-    if photo:
-        photo = photo
+    if player.enemies:
+        player.current_target = random.choice(player.enemies)
     else:
-        photo = None
+        player.current_target = None
 
-main_loop()
-
-@dp.message(F.text == 'Броситься в атаку \u2694\uFE0F')
-async def attack_enemy(message: types.Message):
-    global current_target, current_level_index, random_loot, descript, photo
-
-    user_id = message.from_user.id
+@dp.callback_query(F.data == 'start_adventure')
+async def start_adventure(callback: types.CallbackQuery):
+    user_id = callback.from_user.id
     character = get_character(user_id)
 
     if character is None:
-        await message.answer('Сначала начните игру, чтобы получить персонажа!')
+        await callback.answer("Сначала начните игру, чтобы получить персонажа!")
+        return
+
+    await callback.message.answer(f'Вы направляетесь к новым свершениям, у вас \n{character.inventory.show_inventory()} \nВ вашем кошельке{character.money} монет.', parse_mode='HTML')
+    photo = FSInputFile(photo_2)  
+
+    await bot.send_photo(chat_id=callback.message.chat.id, photo=photo, caption='Тихие пролески сменяются полями, реками и озерами, после полудня пути вы входите на земли Пепельных равнин. \nЭти земли некогда славились своей красотой, но чем ближе вы к замку Каструм Нахт, тем больше кажется что вы из жаркого лета переместились в позднюю осень.')
+                                  
+    await asyncio.sleep(2)
+    photo = FSInputFile(photo_3)  
+    Player.reset_game(character)
+    
+    await bot.send_photo(chat_id=callback.message.chat.id, photo=photo, caption='Вот вы уже на обширном кладбище этих земель, еще чуть чуть и вы попадете в прилегающую к замку деревню. \nВы видите несколько сомнительных личностей, роющихся у ближайших могил. Когда вы приближаетесь они со злобой смотрят на вас и начинают приближаться...в руке одного из них блеснул нож')
+    await asyncio.sleep(2)
+
+    player = get_player(user_id)
+    player.current_level_index = 0
+    main_loop(player)
+    action_kb = await play_kb(user_id)
+    await callback.message.answer("Что вы хотите сделать?", reply_markup=action_kb)
+
+# Добавляем переменную для отслеживания состояния атаки
+is_ready_to_attack = False
+
+@dp.message(F.text == 'Приготовиться к бою \u2694\uFE0F')
+async def attack_enemy(message: types.Message):
+    global current_target, current_level_index, random_loot, descript, photo, player, is_ready_to_attack
+
+    user_id = message.from_user.id
+    character = get_character(user_id)
+    player = get_player(user_id)
+
+    if character is None:
+        await message.answer('Сначала начните игру, чтобы получить персонажа!\n/start')
         return
 
     # Получаем текущих врагов
-    enemies = enemys  # Замените на ваш метод получения врагов
+    enemies = player.enemies  # Используем врагов из игрока  
     if not enemies:
         await message.answer("Нет доступных врагов для атаки.")
         return
 
     # Формируем список врагов
     enemy_list = "\n".join([f"{i + 1}. {enemy.name} (HP: {enemy.hp})" for i, enemy in enumerate(enemies)])
-    await message.answer(f'Ваши враги:\n{enemy_list}\nВыберите номер врага, которого хотите атаковать:')
+    await message.answer(f'Возможный урон от результата броска кости:\n1. От 1 до {character.strength//5}\n2. От 5 до {character.strength//4}\n3. От 5 до {character.strength//2}\n4. От 5 до {character.strength}\n5. От 20 до {character.strength}6. От 20 до {character.strength*2}\n\nВаши враги:\n{enemy_list}\nВыберите номер врага, которого хотите атаковать:')
+
+    # Устанавливаем состояние готовности к атаке
+    is_ready_to_attack = True
+
 @dp.message(lambda message: message.text.isdigit())
 async def choose_enemy(message: types.Message):
-    global current_target, current_level_index, random_loot, descript, photo
+    global current_target, current_level_index, random_loot, descript, photo, is_ready_to_attack
 
     user_id = message.from_user.id
     character = get_character(user_id)
+    player = get_player(user_id)
 
     if character is None:
-        await message.answer('Сначала начните игру, чтобы получить персонажа!')
+        await message.answer('Сначала начните игру, чтобы получить персонажа !')
+        return
+
+    if not is_ready_to_attack:
+        await message.answer("Сначала нужно приготовиться к бою !")
         return
 
     enemy_index = int(message.text) - 1  # Преобразуем текст в индекс
-    if 0 <= enemy_index < len(enemys):
-        current_target = enemys[enemy_index]  # Устанавливаем текущую цель
+
+    if 0 <= enemy_index < len(player.enemies):
+        current_target = player.enemies[enemy_index]  # Устанавливаем текущую цель
         await message.answer(f'Вы выбрали {current_target.name} в качестве цели!')
+        # Удаляем предыдущее сообщение
+        await asyncio.sleep(2)
+        await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 1)
         
         # Теперь можно продолжить логику атаки
         await perform_attack(message)
@@ -623,7 +628,10 @@ async def choose_enemy(message: types.Message):
         await message.answer("Неверный номер. Пожалуйста, выберите номер из списка.")
 
 async def perform_attack(message: types.Message):
-    global current_target, current_level_index, random_loot, descript, photo
+    global current_target, current_level_index, random_loot, descript, photo, is_ready_to_attack
+    # Удаляем предыдущее сообщение
+    await asyncio.sleep(2)
+    await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
     
     user_id = message.from_user.id
     character = get_character(user_id)
@@ -636,20 +644,60 @@ async def perform_attack(message: types.Message):
         enemy_damage = random.randint(10, current_target.strength)  # Урон врага равен его силе
         character.hp -= enemy_damage  # Уменьшаем здоровье персонажа
         await message.answer(f'{current_target.name} атакует в ответ {character.name} и наносит {enemy_damage} урона!')
-    damage = random.randint(10, character.strength) 
+        if character.hp <= 0:
+            await message.answer(f'{character.name} был повержен в бою!')
+            Player.reset_game(character)
+            player.current_level_index = 0
+            main_loop(player)
+            await message.reply('Вы погибли, попробуйте еще',
+                reply_markup= await main_kb(message.from_user.id))
+                        
+        else:
+            await message.answer(f'{character.name} осталось {character.hp} здоровья.')
+            return None
 
     if current_target.dodge():
         await message.answer(f'{current_target.name} уклоняется от атаки {character.name}!')
         enemy_damage = random.randint(10, current_target.strength)  # Урон врага равен его силе
         character.hp -= enemy_damage  # Уменьшаем здоровье персонажа
         await message.answer(f'{current_target.name} атакует в ответ {character.name} и наносит {enemy_damage} урона!')
+        if character.hp <= 0:
+            await message.answer(f'{character.name} был повержен в бою!')
+            Player.reset_game(character)
+            player.current_level_index = 0
+            main_loop(player)
+            await message.reply('Вы погибли, попробуйте еще',
+                reply_markup= await main_kb(message.from_user.id))
+            
+                        
+        else:
+            await message.answer(f'{character.name} осталось {character.hp} здоровья.')
+            return None
+
+        # Удаляем сообщение о неудачной атаке
+        await asyncio.sleep(2)
+        await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)  
+
     else:
+        if attack == 1:
+            damage = random.randint(1, character.strength//5)
+        elif attack == 2:
+            damage = random.randint(5, character.strength//4)
+        elif attack == 3:
+            damage = random.randint(5, character.strength//2)
+        elif attack == 4:
+            damage = random.randint(5, character.strength)
+        elif attack == 5:
+            damage = random.randint(20, character.strength)
+        elif attack == 6:
+            damage = random.randint(20, character.strength*2)
+
         current_target.hp -= damage
         await message.answer(f'{character.name} атакует {current_target.name} и наносит {damage} урона!')
 
         if current_target.hp <= 0:
             await message.answer(f'{current_target.name} повержен!')
-            enemys.remove(current_target)  # Удаляем поверженного бандита
+            player.enemies.remove(current_target)  # Удаляем поверженного бандита
             current_target = None  # Сбрасываем цель
         else:
             await message.answer(f'{current_target.name} осталось {current_target.hp} здоровья.')
@@ -688,16 +736,16 @@ async def perform_attack(message: types.Message):
                     if character.hunger <= 0:
                         await message.answer(f'{character.name} умер от голода!')
                         Player.reset_game(character)
-                        current_level_index = 0
-                        main_loop()
+                        player.current_level_index = 0
+                        main_loop(player)
                         await message.reply('НУ а как ты хотел ? Доставку еды еще не изобрели',
                                         reply_markup= await main_kb(message.from_user.id))
                         
                     if character.hp <= 0:
                         await message.answer(f'{character.name} был повержен в бою!')
                         Player.reset_game(character)
-                        current_level_index = 0
-                        main_loop()
+                        player.current_level_index = 0
+                        main_loop(player)
                         await message.reply('Вы погибли, попробуйте еще',
                                 reply_markup= await main_kb(message.from_user.id))
                         
@@ -705,66 +753,78 @@ async def perform_attack(message: types.Message):
                         await message.answer(f'{character.name} осталось {character.hp} здоровья.')
                 else:
                     await message.answer(f'Атака {current_target.name} не пробила броню {character.name}!')
-
+    # После завершения атаки сбрасываем состояние
+    is_ready_to_attack = False
     # Проверка, остались ли бандиты
-    if not enemys:
+    if not player.enemies:
+        
+        random_loots = player.loot
+        random_loot = random.choice(random_loots)
         character.inventory.add_item(random_loot, character)
+        await asyncio.sleep(1)
+        await message.answer(f'Голод:{character.hunger} - 1 \nУ вас осталось {character.hunger - 1} сытости')
+        character.hunger -= 1
+        await asyncio.sleep(2)
+        await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
         await message.answer(f'Все враги повержены! Вы победили!\nПосле победы над врагами вы находите:\n{random_loot}', parse_mode = "HTML")
-        photo = FSInputFile(photo)
+        photo = FSInputFile(player.photo)
         await asyncio.sleep(1)
 
-        await bot.send_photo(chat_id=message.chat.id, photo=photo, caption=descript)
+        await asyncio.sleep(1)
+        await bot.send_photo(chat_id=message.chat.id, photo=photo, caption=levels[player.current_level_index].descript)
         #await message.answer(descript)
         current_target = None  # Сбрасываем цель после победы
-        if current_level_index == 4:
+        if player.current_level_index == 4:
             mess = river_port(character)
             await message.answer(mess)
             if character.hp <= 0:
                 await message.answer(f'{character.name} утонул')
                 Player.reset_game(character)
-                current_level_index = 0
-                main_loop()
+                player.current_level_index = 0
+                main_loop(player)
                 await message.reply('Добро пожаловать !',
                          reply_markup= await main_kb(message.from_user.id))
                 
-        elif current_level_index == 7:
+        elif player.current_level_index == 7:
             await message.answer("Вы победили, теперь, когда угроза миновала вы чувствуете как сильно устали. Вы идете обратно, забрав артефакт, который служил вампиру")
             Player.reset_game(character) # Сбрасываем уровень на стартовый
-            current_level_index = 0
-            main_loop()
+            player.current_level_index = 0
+            main_loop(player)
             await message.reply('Добро пожаловать, снова',
                             reply_markup= await main_kb(message.from_user.id))
-            
-        await message.answer(f'Голод:{character.hunger} - 1 осталось {character.hunger - 1}')
-        character.hunger -= 1
+            return None
     # Проверяем, не упал ли голод до нуля
         if character.hunger <= 0:
             await asyncio.sleep(1)
             await message.answer(f'{character.name} умер от голода!')
             Player.reset_game(character)
-            current_level_index = 0
-            main_loop()
+            player.current_level_index = 0
+            main_loop(player)
             await message.reply('НУ а как ты хотел ? Доставку еды еще не изобрели',
                             reply_markup= await main_kb(message.from_user.id))
             
-        current_level_index += 1
-        main_loop()
+        player.current_level_index += 1
+        main_loop(player)
 
 @dp.message(F.text == 'Скрыться \U0001f464')
 async def hide_from_enemy(message: types.Message):
     global current_level_index, random_loot, descript, photo
     user_id = message.from_user.id
     character = get_character(user_id)
+    player = get_player(user_id)
 
     if character is None:
         await message.answer("Сначала начните игру, чтобы получить персонажа!")
         return
 
     global current_target
+    enemies = player.enemies  # Используем врагов из игрока  
+    if not enemies:
+        await message.answer("Нет доступных врагов для атаки.")
 
     # Если цель еще не выбрана, выбираем ее
     if current_target is None:
-        current_target = random.choice(enemys)  # Выбираем случайного врага
+        current_target = random.choice(enemies)  # Выбираем случайного врага
         await message.answer(f'Вы пытаетесь скрыться от {current_target.name}')
 
     # Логика для скрытия
@@ -772,17 +832,21 @@ async def hide_from_enemy(message: types.Message):
 
     if stealth_success:
         await message.answer(f"{character.name} успешно скрывается от {current_target.name}!")
-        photo = FSInputFile(photo) 
-        current_target = None
+        await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 1)
         await asyncio.sleep(1)
-        await bot.send_photo(chat_id=message.chat.id, photo=photo, caption=descript)
         await message.answer(f'Голод:{character.hunger} - 1 осталось {character.hunger - 1}')
+        character.hunger -= 1
+        photo = FSInputFile(player.photo) 
+        current_target = None
+        await asyncio.sleep(2)
+        await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
+        await bot.send_photo(chat_id=message.chat.id, photo=photo, caption=levels[player.current_level_index].descript)
         if character.hunger <= 0:
             await asyncio.sleep(1)
             await message.answer(f'{character.name} умер от голода!')
             Player.reset_game(character)
-            current_level_index = 0
-            main_loop()
+            player.current_level_index = 0
+            main_loop(player)
             await message.reply('НУ а как ты хотел ? Доставку еды еще не изобрели',
                             reply_markup= await main_kb(message.from_user.id))
         if current_level_index == 4:
@@ -792,130 +856,88 @@ async def hide_from_enemy(message: types.Message):
                 await asyncio.sleep(1)
                 await message.answer(f'{character.name} утонул')
                 Player.reset_game(character)
-                current_level_index = 0
-                main_loop()
+                player.current_level_index = 0
+                main_loop(player)
                 await message.reply('Добро пожаловать !',
                          reply_markup= await main_kb(message.from_user.id))
                 
         elif current_level_index == 7:
             await message.answer("Вы победили, теперь, когда угроза миновала вы чувствуете как сильно устали. Вы идете обратно, забрав артефакт, который служил вампиру")
             Player.reset_game(character) # Сбрасываем уровень на стартовый
-            current_level_index = 0
-            main_loop()
+            player.current_level_index = 0
+            main_loop(player)
             await message.reply('Добро пожаловать, снова',
                             reply_markup= await main_kb(message.from_user.id))
         
-        current_level_index += 1
-        main_loop()
+        player.current_level_index += 1
+        main_loop(player)
     else:
         await message.answer(f"{character.name} не смог скрыться и столкнулся с {current_target.name}!")
+        await asyncio.sleep(2)
+        await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
 
-        damage = character.strength
         enemy_damage = current_target.strength
-        await message.answer(f"{current_target.name} атакует {character.name} и наносит {enemy_damage} урона!")
+        character.hp -= enemy_damage
+        await message.answer(f"{current_target.name} атакует {character.name} и наносит {enemy_damage} урона!\nУ вас осталось {character.hp} здоровья")
+        await asyncio.sleep(2)
+        await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
 
         if character.hp <= 0:
             await message.answer(f'{character.name} был повержен в бою!')
             Player.reset_game(character)
-            current_level_index = 0
-            main_loop()
+            player.current_level_index = 0
+            main_loop(player)
             await message.reply('Добро пожаловать !',
                         reply_markup= await main_kb(message.from_user.id))
             
 
         await message.answer(f"{character.name} осталось {character.hp} здоровья.")
-        if current_target.dodge():
-            await message.answer(f'{current_target.name} уклонился от атаки {character.name}!')
-            enemy_damage = random.randint(1, current_target.strength)  # Урон врага равен его силе
-            character.hp -= enemy_damage  # Уменьшаем здоровье персонажа
-            await message.answer(f'{current_target.name} атакует в ответ {character.name} и наносит {enemy_damage} урона!')
-        else:
-            # Уменьшаем здоровье бандита
-            current_target.hp -= damage
-            await message.answer(f'{character.name} атакует {current_target.name} и наносит {damage} урона!')
-
-            if current_target.hp <= 0:
-                await message.answer(f'{current_target.name} повержен!')
-                enemys.remove(current_target)  # Удаляем поверженного бандита
-                current_target = None
-            else:
-                await message.answer(f'{current_target.name} осталось {current_target.hp} здоровья.')
-
-                if current_target.tipe == 'wither':
-                    cast = await message.answer_dice("\U0001f3b2")
-                    await asyncio.sleep(4)
-                    cast_value = cast.dice.value
-                    if cast_value > 2:
-                        enemy_spels = [darkness_bolt, hunger_damage]
-                        spell = random.choice(enemy_spels)
-                        enemy_result_message = Magic.cast_spell(current_target, spell, character)
-                        await message.answer(enemy_result_message)
-                    else:
-                        await message.answer("Врагу не удается применить заклинание и он ошеломлен")
-                        return None
-                elif current_target.tipe == 'вампир':
-                    enemy_spels = [darkness_bolt, hunger_damage, vampirism]
-                    spell = random.choice(enemy_spels)
-                    enemy_result_message = Magic.cast_spell(current_target, spell, character)
-                    await message.answer(enemy_result_message)    
-                enemy_damage = current_target.strength  # Урон врага равен его силе
-                character.hp -= enemy_damage  # Уменьшаем здоровье персонажа
-                await message.answer(f'{current_target.name} атакует {character.name} и наносит {enemy_damage} урона!')
-
-                if character.hp <= 0:
-                    await asyncio.sleep(1)
-                    await message.answer(f'{character.name} был повержен в бою!')
-                    Player.reset_game(character)
-                    current_level_index = 0
-                    main_loop()
-                    await message.reply('Добро пожаловать !',
-                            reply_markup= await main_kb(message.from_user.id))
-                    
-                else:
-                    await message.answer(f'{character.name} осталось {character.hp} здоровья.')
 
     # Проверка, остались ли бандиты
-    if not enemys:
+    if not player.enemies:
+        random_loots = player.loot
+        random_loot = random.choice(random_loots)
         character.inventory.add_item(random_loot, character)
-        await message.answer(f'Все враги повержены! Вы победили!\nПосле победы над врагами вы находите с их тел\n{random_loot}', parse_mode = "HTML")
-        photo = FSInputFile(photo)  
-        await bot.send_photo(chat_id=message.chat.id, photo=photo, caption=descript)
-        current_target = None
-        if current_level_index == 4:
+        await message.answer(f'Все враги повержены! Вы победили!\nПосле победы над врагами вы находите:\n{random_loot}', parse_mode = "HTML")
+        photo = FSInputFile(player.photo)
+        await asyncio.sleep(1)
+
+        await bot.send_photo(chat_id=message.chat.id, photo=photo, caption=levels[player.current_level_index].descript)
+        #await message.answer(descript)
+        await message.answer(f'Голод:{character.hunger} - 1 осталось {character.hunger - 1}')
+        character.hunger -= 1
+        current_target = None  # Сбрасываем цель после победы
+        if player.current_level_index == 4:
             mess = river_port(character)
             await message.answer(mess)
             if character.hp <= 0:
-                await asyncio.sleep(1)
                 await message.answer(f'{character.name} утонул')
                 Player.reset_game(character)
-                current_level_index = 0
-                main_loop() 
+                player.current_level_index = 0
+                main_loop(player)
                 await message.reply('Добро пожаловать !',
                          reply_markup= await main_kb(message.from_user.id))
-                return
-        elif current_level_index == 7:
+                
+        elif player.current_level_index == 7:
             await message.answer("Вы победили, теперь, когда угроза миновала вы чувствуете как сильно устали. Вы идете обратно, забрав артефакт, который служил вампиру")
-            Player.reset_game(character)  # Сброс игры
-            current_level_index = 0
-            main_loop()
+            Player.reset_game(character) # Сбрасываем уровень на стартовый
+            player.current_level_index = 0
+            main_loop(player)
             await message.reply('Добро пожаловать, снова',
-                                reply_markup=await main_kb(message.from_user.id))
-            return
-        # Уменьшаем голод после атаки
-        await message.answer(f'Голод:{character.hunger} - 1 осталось {character.hunger - 1}')
-        character.hunger -= 1
+                            reply_markup= await main_kb(message.from_user.id))
+            
     # Проверяем, не упал ли голод до нуля
         if character.hunger <= 0:
             await asyncio.sleep(1)
             await message.answer(f'{character.name} умер от голода!')
             Player.reset_game(character)
-            current_level_index = 0
-            main_loop()
+            player.current_level_index = 0
+            main_loop(player)
             await message.reply('НУ а как ты хотел ? Доставку еды еще не изобрели',
                             reply_markup= await main_kb(message.from_user.id))
-            return
-        current_level_index += 1
-        main_loop()
+            
+        player.current_level_index += 1
+        main_loop(player)
 
 # Определение состояний
 class Form(StatesGroup):
@@ -937,7 +959,7 @@ async def show_inventory(message: types.Message):
         await message.answer(inventory)
         return
 
-    await message.answer(f'{character.character_info()}\n\nВаш инвентарь:\n{inventory} \nВыберите предмет, который хотите исползовать', parse_mode='HTML')
+    await message.answer(f'{character.character_info()}\n\nВаш инвентарь:\n{inventory} \n\nЧтобы использовать предмет, скопируйте и вставьте его название.', parse_mode='HTML')
     
     @dp.message(lambda message: True)
     async def answer_item(message: types.Message, state: FSMContext):
@@ -948,42 +970,38 @@ async def show_inventory(message: types.Message):
         result_message = character.inventory.use_item(item_name, character)
         await message.answer(result_message)
 
-        # await state.finish()
 @dp.message(F.text == 'Изучить место \U0001f4dc')
 async def handle_defend(message: types.Message):
     global current_level_index
     user_id = message.from_user.id
     character = get_character(user_id)
+    player = players.get(user_id)
 
-    if character is None:
-        await message.answer('Сначала начните игру, чтобы получить персонажа !')
+    if player is None:
+        await message.answer('Сначала начните игру, чтобы получить персонажа!')
         return
-    
-    if character.hunger > 0:
-        await message.answer(f'Голод:{character.hunger} - 1 осталось {character.hunger - 1}')
-        character.hunger -= 1
-        if character.hunger <= 0:
-            await message.answer(f'{character.name} умер от голода!')
-            Player.reset_game(character)
-            current_level_index = 0
-            main_loop()
-            await message.reply('НУ а как ты хотел ? Доставку еды еще не изобрели',
-                                reply_markup= await main_kb(message.from_user.id))
-    else:
+
+    if player.has_researched:
+        await message.answer("Вы уже исследовали это место.")
+        return  # Добавьте return, чтобы не продолжать выполнение кода
+
+    player.has_researched = True  # Устанавливаем флаг исследования
+
+    # Логика нахождения предмета
+    secret_loot = [krekers, fish, krekers, krekers, bread, meat, meat, apple, cheese, fish, berry, root_meat, root_meat, root_meat, run_of_destroy, boots, shield]
+    found_item = random.choice(secret_loot)
+    character.inventory.add_item(found_item, character)
+    character.hunger -= 1
+    if character.hunger <= 0:
         await message.answer(f'{character.name} умер от голода!')
         Player.reset_game(character)
         current_level_index = 0
         main_loop()
         await message.reply('НУ а как ты хотел ? Доставку еды еще не изобрели',
                             reply_markup= await main_kb(message.from_user.id))
-        #return  # Завершаем выполнение функции, если персонаж умер
-
-    # Логика нахождения предмета
-    secret_loot = [krekers, bread, meat, apple, cheese, fish, berry, root_meat, root_meat, root_meat, run_of_destroy, boots, shield]
-    found_item = random.choice(secret_loot)
-    character.inventory.add_item(found_item, character)
-    await asyncio.sleep(1)
-    await message.answer(f'Вы изучили место и нашли: {found_item.name}! \nВаш уровень голода снизился на 1. Текущий уровень голода: {character.hunger}.')
+    else:
+        await asyncio.sleep(1)
+        await message.answer(f'Вы изучили место и нашли: {found_item.name}! \nВаш уровень голода снизился на 1. Текущий уровень голода: {character.hunger}.')
 
 @dp.message(F.text == 'Особые умения \U0001f31f')
 async def magic_menu(message: types.Message):
@@ -1011,6 +1029,7 @@ async def handle_spell_cast(callback: types.CallbackQuery):
     global current_target, current_level_index, random_loot, descript, photo  # Используем глобальную переменную для текущей цели
     user_id = callback.from_user.id
     character = get_character(user_id)
+    player = get_player(user_id)
 
     if character is None:
         await callback.answer('Сначала начните игру, чтобы получить персонажа!')
@@ -1023,13 +1042,13 @@ async def handle_spell_cast(callback: types.CallbackQuery):
     
     # Получаем врагов
     global enemys  # Убедимся, что мы используем глобальный список врагов
-    if not enemys:
+    if not player.enemies:
         await callback.answer('Нет доступных врагов для атаки!')
         return
 
     # Если цель еще не выбрана, выбираем ее
     if current_target is None:
-        current_target = random.choice(enemys)  # Выбираем случайного врага
+        current_target = random.choice(player.enemies)  # Выбираем случайного врага
 
     # Переменная для хранения сообщения о результате
     result_message = ""
@@ -1040,7 +1059,7 @@ async def handle_spell_cast(callback: types.CallbackQuery):
         result_message = Magic.cast_spell(character, spell, current_target)  # Применение заклинания огненного шара
         if current_target.hp <= 0:
             result_message += f"{current_target.name} повержен!\n"
-            enemys.remove(current_target)  # Удаляем поверженного врага
+            player.enemies.remove(current_target)  # Удаляем поверженного врага
             current_target = None  # Сбрасываем цель
     elif callback.data == 'cristal_shield':
         await callback.message.answer('\u2600\uFE0F')
@@ -1049,20 +1068,20 @@ async def handle_spell_cast(callback: types.CallbackQuery):
     elif callback.data == 'shock':
         await callback.message.answer('\u26A1')
         spell = shock
-        for current_target in enemys:
+        for current_target in player.enemies:
             result_message += Magic.cast_spell(character, spell, current_target) + '\n'  # Применение цепной молнии
             if current_target.hp <= 0:
                 result_message += f"{current_target.name} повержен!\n"
-                enemys.remove(current_target)  # Удаляем поверженного врага
+                player.enemies.remove(current_target) # Удаляем поверженного врага
         current_target = None  # Сбрасываем цель после применения заклинания
     elif callback.data == 'meteor':
         await callback.message.answer('\U0001f4ab')
         spell = meteor
-        for current_target in enemys:
+        for current_target in player.enemies:
             result_message += Magic.cast_spell(character, spell, current_target) + '\n'  # Применение метеоритного дождя
             if current_target.hp <= 0:
                 result_message += f"{current_target.name} повержен!\n"
-                enemys.remove(current_target)  # Удаляем поверженного врага
+                player.enemies.remove(current_target)  # Удаляем поверженного бандита
         current_target = None  # Сбрасываем цель после применения заклинания
     elif callback.data == 'heall':
         await callback.message.answer('\u2764\uFE0F')
@@ -1073,12 +1092,16 @@ async def handle_spell_cast(callback: types.CallbackQuery):
     await callback.message.answer(result_message)
 
     # Проверка, остались ли враги
-    if not enemys:
+    if not player.enemies:
+        random_loots = player.loot
+        random_loot = random.choice(random_loots)
         character.inventory.add_item(random_loot, character)
         await callback.message.answer(f'Все враги повержены! Вы победили!\nПосле победы над врагами вы находите с их тел\n{random_loot}', parse_mode = "HTML")
-        photo = FSInputFile(photo)  
+        await callback.message.answer(f'Голод:{character.hunger} - 1 осталось {character.hunger - 1}')
+        character.hunger -= 1
+        photo = FSInputFile(player.photo)  
 
-        await bot.send_photo(chat_id=callback.message.chat.id, photo=photo, caption=descript)
+        await bot.send_photo(chat_id=callback.message.chat.id, photo=photo, caption=levels[player.current_level_index].descript)
         #await message.answer(descript)
         current_target = None  # Сбрасываем цель после победы
         if current_level_index == 4:
@@ -1086,35 +1109,33 @@ async def handle_spell_cast(callback: types.CallbackQuery):
             await callback.message.answer(mess)
             if character.hp <= 0:
                 await asyncio.sleep(1)
-                await callback.message.answer(f'{character.name} утонул')
+                await callback.message.answer(f'{character.name} тонет')
                 Player.reset_game(character)
-                current_level_index = 0
-                main_loop()
+                player.current_level_index = 0
+                main_loop(player)
                 await callback.message.reply('Добро пожаловать !',
                          reply_markup= await main_kb(callback.message.from_user.id))
                 
         elif current_level_index == 7:
             await callback.message.answer("Вы победили, теперь, когда угроза миновала вы чувствуете как сильно устали. Вы идете обратно, забрав артефакт, который служил вампиру")
             Player.reset_game(character) # Сбрасываем уровень на стартовый
-            current_level_index = 0
-            main_loop()
+            player.current_level_index = 0
+            main_loop(player)
             await callback.message.reply('Добро пожаловать, снова',
                             reply_markup= await main_kb(callback.message.from_user.id))
             
-        await callback.message.answer(f'Голод:{character.hunger} - 1 осталось {character.hunger - 1}')
-        character.hunger -= 1
     # Проверяем, не упал ли голод до нуля
         if character.hunger <= 0:
             await asyncio.sleep(1)
             await callback.message.answer(f'{character.name} умер от голода!')
             Player.reset_game(character)
-            current_level_index = 0
-            main_loop()
+            player.current_level_index = 0
+            main_loop(player)
             await callback.message.reply('НУ а как ты хотел ? Доставку еды еще не изобрели',
                             reply_markup= await main_kb(callback.message.from_user.id))
             
-        current_level_index += 1
-        main_loop()
+        player.current_level_index += 1
+        main_loop(player)
 
 async def main():
     await dp.start_polling(bot)

@@ -88,14 +88,14 @@ class Spell:
 
     @staticmethod
     def fireball_character(character, target):
-        damage = random.randint(10, 60)
+        damage = random.randint(10, 100)
         target.hp -= max(0, damage - target.armor)
         msg = f"{character.name} применяет {Spell('Огненный шар', 15, Spell.fireball_character).name} на {target.name}, нанося {damage} урона!\n{target.name} осталось здоровья: {target.hp}"
         return msg
 
     @staticmethod
     def heal_character(character):
-        heal_amount = random.randint(20, 60)
+        heal_amount = random.randint(20, 80)
         character.hp += heal_amount
         msg = f"{character.name} применяет исцеление, восстанавливая {heal_amount} здоровья!\n{character.name} текущее здоровье: {character.hp}"
         return msg
@@ -116,7 +116,7 @@ class Spell:
     
     @staticmethod
     def shok_character(character, target):
-        damage = random.randint(10, 55)
+        damage = random.randint(10, 60)
         target.hp -= damage
         msg = f'{character.name} применяет цепную молнию на {target.name}\n{target.name} осталось {target.hp} здоровья'
         return msg
@@ -146,7 +146,7 @@ class Spell:
         damage = random.randint(1, 40)
         character.hp -= damage
         target.hp += damage
-        msg = f"{target.name} забирает {damage} здоровья у {character.name}"
+        msg = f"{target.name} забирает {damage} здоровья у {character.name}\nУ вас осталось {character.hp}"
         return msg
 
 
@@ -185,7 +185,7 @@ darkness_bolt = Spell("Теневые стрелы", 10, Spell.dark_bolt)
 vampirism = Spell("Дань жизни", 10, Spell.vampirism)
 
 raider1 = Character(name='Бандит с ножом', tipe='maroder', hp=60, strength=25)
-raider2 = Character(name='Главарь банды', tipe='maroder', hp=70, strength=30)
+raider2 = Character(name='Главарь банды', tipe='maroder', hp=70, strength=30, armor= 4)
 raider3 = Character(name='Худощавый бандит', tipe='maroder', hp=40, strength=20)
 
 Necromant = Character(name='Некромант', tipe='wither', mana = 600, hp=80, perception=100, strength=30)
@@ -195,7 +195,7 @@ zombie_2 = Character(name= 'Мертвец', tipe='zomback', hp=31, perception=1
 gull = Character(name='Нетопырь', tipe='monster', hp= 120, agility=80, perception= 30, strength=80)
 
 utopec_1 = Character(name='Скелет', tipe='zomback', hp = 50, perception=70, strength= 20)
-utopec_2 = Character(name='Скелет в керассе', tipe='zombak', hp=40, perception=30, strength=35, armor= 3)
+utopec_2 = Character(name='Скелет в кирасе', tipe='zombak', hp=40, perception=30, strength=35, armor= 3)
 utopec_3 = Character(name='Раздувшийся труп', tipe='zomback', hp = 70, strength= 25, armor= 2)
 utopec_4 = Character(name='Дряхлый скелет', tipe='zomback', hp = 22, perception=40, strength= 15)
 
