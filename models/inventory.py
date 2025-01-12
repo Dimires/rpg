@@ -78,8 +78,8 @@ class Inventory:
         return "\n\n".join([f"<code>{data['item'].name}</code> (x{data['count']})\n<i>{data['item'].description}</i>" for data in self.items.values()])
 # ХИЛКИ
 small_health_potion = Item(name = "Малое зелье лечения", description= "Бутыль со слабым лекарственным средством, восстанавливает 10 hp.", healing_value= 10)
-medium_health_potion = Item(name = "Малое зелье лечения", description= "Бутыль с лекарственным средством, поправит ваше самочувствие на 15 hp.", healing_value= 15)
-large_health_potion = Item(name = "Малое зелье лечения", description= "Бутыль с сильным лекарством, оно восстановит вам 30 hp.", healing_value= 30)
+medium_health_potion = Item(name = "Зелье лечения", description= "Бутыль с лекарственным средством, поправит ваше самочувствие на 15 hp.", healing_value= 15)
+large_health_potion = Item(name = "Большое зелье лечения", description= "Бутыль с сильным лекарством, оно восстановит вам 30 hp.", healing_value= 30)
 mana_potion = Item(name="Зелье маны", description= "Бутыль вещества, дарющего магам возможность сотворять волшебство.", mana_value= 200)
 strength_potion = Item(name= "Зелье силы", description= "Напиток, что даст выпившему силу великана.", buff_value=2)
 

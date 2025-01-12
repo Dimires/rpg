@@ -94,16 +94,16 @@ class Spell:
         return msg
 
     @staticmethod
-    def heal_character(character):
+    def heal_character(character, target):
         heal_amount = random.randint(20, 80)
-        character.hp += heal_amount
+        target.hp += heal_amount
         msg = f"{character.name} применяет исцеление, восстанавливая {heal_amount} здоровья!\n{character.name} текущее здоровье: {character.hp}"
         return msg
 
     @staticmethod
-    def armor_character(character):
+    def armor_character(character, target):
         armor_amount = 1
-        character.armor += armor_amount
+        target.armor += armor_amount
         msg = f"{character.name} накладывает заклинание брони, увеличивая защиту на {armor_amount}!\n{character.name} текущая защита: {character.armor}"
         return msg
 
@@ -163,17 +163,22 @@ class Magic(Character):
     def __str__(self) -> str:
         return f'{self.name} \n{self.skill_descriptions}'
 
-    def cast_spell(self, spell, target=None):
+    def cast_spell(self, spell, target):
         if self.mana >= spell.mana_cost:
-            self.mana -= spell.mana_cost  # Правильно вычитаем ману у персонажа
-            if target:
-                return spell.effect(self, target)  # Передаем self как персонажа, который накладывает заклинание
-            else:
-                return spell.effect(self)  # Передаем self как персонажа, который накладывает заклинание
+            self.mana -= spell.mana_cost
+            return spell.effect(self, target)
         else:
             return f"{self.name} не хватает маны для применения заклинания {spell.name}!"
 
-        
+    def cast_area_spell(self, spell, targets):
+        if self.mana >= spell.mana_cost:
+            self.mana -= spell.mana_cost
+            messages = []
+            for target in targets:
+                messages.append(spell.effect(self, target))
+            return "\n".join(messages)
+        else:
+            return f"{self.name} не хватает маны для применения заклинания {spell.name}!"
 
 fireball = Spell("Огненный шар", 20, Spell.fireball_character)
 heal = Spell("Исцеление", 50, Spell.heal_character)
