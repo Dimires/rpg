@@ -676,7 +676,7 @@ async def perform_attack(message: types.Message, player):
                         await asyncio.sleep(4)
                         enemy_spels = [darkness_bolt, hunger_damage]
                         spell = random.choice(enemy_spels)
-                        enemy_result_message = Magic.cast_spell(current_target, spell, character)
+                        enemy_result_message = Magic.cast_spell(player.current_target, spell, character)
                         await message.answer(enemy_result_message)
                     else:
                         await asyncio.sleep(4)
@@ -722,15 +722,6 @@ async def perform_attack(message: types.Message, player):
     # Проверка, остались ли бандиты
     if not player.enemies:
         
-        if player.current_level_index == 7:
-            await message.answer("Вы победили, теперь, когда угроза миновала вы чувствуете как сильно устали. Вы идете обратно, забрав артефакт, который служил вампиру")
-            Player.reset_game(character) # Сбрасываем уровень на стартовый
-            player.current_level_index = 0
-            main_loop(player)
-            await message.answer('Добро пожаловать, снова',
-                        reply_markup= await main_kb(message.from_user.id))
-            return None 
-        
         random_loots = player.loot
         random_loot = random.choice(random_loots)
         character.inventory.add_item(random_loot, character)
@@ -752,7 +743,7 @@ async def perform_attack(message: types.Message, player):
                         reply_markup= await main_kb(message.from_user.id))
             return None 
         #await message.answer(descript)
-        current_target = None  # Сбрасываем цель после победы
+        player.current_target = None  # Сбрасываем цель после победы
         if player.current_level_index == 4:
             mess = river_port(character)
             await message.answer(mess)
@@ -803,7 +794,6 @@ async def hide_from_enemy(message: types.Message):
         await message.answer("Сначала начните игру, чтобы получить персонажа!\n/start")
         return
 
-    #global current_target
     enemies = player.enemies  # Используем врагов из игрока  
     if not enemies:
         await message.answer("Нет доступных врагов для атаки.")
